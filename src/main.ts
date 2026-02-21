@@ -56,12 +56,14 @@ function buildSidebar(): void {
   const statusPanel = document.createElement('div');
   statusPanel.className = 'panel';
   const statusDiv = document.createElement('div');
-  statusDiv.className = `room-status ${room.phase}`;
+  statusDiv.className = `room-status ${room.phase}${room.stable ? ' stable' : ''}`;
   statusDiv.textContent =
     room.phase === 'edit'
       ? `Changes left: ${room.changesLeft}. Toggle cells, then start life.`
       : room.phase === 'alive'
-        ? `Life running — step ${room.stepCount}`
+        ? room.stable
+          ? `Life stable — no change (step ${room.stepCount}). Finish to collect reward.`
+          : `Life running — step ${room.stepCount}`
         : 'Room complete — go to next';
   statusPanel.appendChild(statusDiv);
 
@@ -149,9 +151,11 @@ function startGOL(): void {
   golInterval = window.setInterval(() => {
     const room = getCurrentRoom(state);
     if (room.phase !== 'alive') return;
-    updateRoom(roomTick(room));
+    const next = roomTick(room);
+    updateRoom(next);
     buildSidebar();
     paint();
+    if (next.stable) stopGOL();
   }, GOL_MS);
 }
 

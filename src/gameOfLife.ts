@@ -90,3 +90,16 @@ export function toggleCell(grid: Grid2D, row: number, col: number): Grid2D {
 export function countAlive(grid: Grid2D): number {
   return grid.flat().reduce<number>((a, c) => a + c, 0);
 }
+
+/** True if both grids have the same dimensions and cell values */
+export function gridsEqual(a: Grid2D, b: Grid2D): boolean {
+  const rows = a.length;
+  const cols = a[0]?.length ?? 0;
+  if (b.length !== rows || (b[0]?.length ?? 0) !== cols) return false;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (a[r][c] !== b[r][c]) return false;
+    }
+  }
+  return true;
+}

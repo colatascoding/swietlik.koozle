@@ -194,6 +194,11 @@ body {
   color: var(--accent);
 }
 
+.room-status.alive.stable {
+  background: rgba(126, 232, 168, 0.25);
+  color: var(--life);
+}
+
 .room-status.complete {
   background: rgba(232, 200, 126, 0.2);
   color: var(--gold);

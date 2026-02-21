@@ -1,5 +1,5 @@
 import type { Grid2D, RoomPhase } from './types.js';
-import { createPregeneratedGrid, step, toggleCell } from './gameOfLife.js';
+import { createPregeneratedGrid, step, toggleCell, gridsEqual } from './gameOfLife.js';
 
 const DEFAULT_ROWS = 12;
 const DEFAULT_COLS = 12;
@@ -22,6 +22,8 @@ export interface RoomState {
   ruleMod?: string;
   /** Toggles left in edit phase (1–3). Each click consumes one. */
   changesLeft: number;
+  /** True when the grid did not change after the last step (still life). */
+  stable?: boolean;
 }
 
 export function createRoom(id: string, ruleMod?: string): RoomState {
@@ -55,10 +57,13 @@ export function roomStartAlive(room: RoomState): RoomState {
 
 export function roomTick(room: RoomState): RoomState {
   if (room.phase !== 'alive') return room;
+  const nextGrid = step(room.grid, room.ruleMod);
+  const stable = gridsEqual(room.grid, nextGrid);
   return {
     ...room,
-    grid: step(room.grid, room.ruleMod),
+    grid: nextGrid,
     stepCount: room.stepCount + 1,
+    stable,
   };
 }
 
