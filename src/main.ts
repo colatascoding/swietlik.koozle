@@ -72,11 +72,12 @@ function buildSidebar(): void {
   startBtn.textContent = room.phase === 'edit' ? 'Start life' : room.phase === 'alive' ? 'Running…' : 'Next room';
   startBtn.disabled = room.phase === 'alive';
   startBtn.onclick = () => {
-    if (room.phase === 'edit') {
-      updateRoom(roomStartAlive(room));
+    const current = getCurrentRoom(state);
+    if (current.phase === 'edit') {
+      updateRoom(roomStartAlive(current));
       startGOL();
-    } else if (room.phase === 'complete') {
-      state = giveRoomReward(state, 15 + room.stepCount, true);
+    } else if (current.phase === 'complete') {
+      state = giveRoomReward(state, 15 + current.stepCount, true);
       state = addRoom(state);
       updateRoom(getCurrentRoom(state));
       stopGOL();
@@ -91,9 +92,10 @@ function buildSidebar(): void {
   completeBtn.style.marginTop = '0.5rem';
   completeBtn.disabled = room.phase !== 'alive';
   completeBtn.onclick = () => {
-    if (room.phase === 'alive') {
+    const current = getCurrentRoom(state);
+    if (current.phase === 'alive') {
       stopGOL();
-      updateRoom(roomComplete(room));
+      updateRoom(roomComplete(current));
       buildSidebar();
       paint();
     }
@@ -110,7 +112,7 @@ function buildSidebar(): void {
     <div class="stat-row"><span>Level</span><span>${c.level}</span></div>
     <div class="stat-row"><span>XP</span><span>${c.xp} / ${c.xpToNext}</span></div>
     <div class="stat-row"><span>HP</span><span>${state.character.hp} / ${c.maxHp}</span></div>
-    <div class="health-bar"><div class="health-fill" style="width: ${(100 * state.character.hp) / c.maxHp}%"></div></div>
+    <div class="health-bar"><div class="health-fill" style="width: ${c.maxHp > 0 ? (100 * state.character.hp) / c.maxHp : 0}%"></div></div>
   `;
   sidebar.appendChild(charPanel);
 

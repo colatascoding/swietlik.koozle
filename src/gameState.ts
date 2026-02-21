@@ -26,6 +26,7 @@ export function createGameState(): GameState {
 }
 
 export function getCurrentRoom(state: GameState): RoomState {
+  if (state.rooms.length === 0) throw new Error('No rooms in state');
   return state.rooms[state.currentRoomIndex] ?? state.rooms[0];
 }
 
@@ -36,6 +37,7 @@ export function addRoom(state: GameState): GameState {
 }
 
 export function addItem(state: GameState, itemId: string, count: number = 1): GameState {
+  if (count < 1) return state;
   const def = getItemById(itemId);
   if (!def) return state;
   const inv = [...state.inventory];

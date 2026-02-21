@@ -60,7 +60,9 @@ export function fitGridInCanvas(
 ): { cellW: number; cellH: number; offsetX: number; offsetY: number } {
   const w = canvas.width;
   const h = canvas.height;
-  const cellW = Math.min(maxCellSize, Math.floor(w / cols), Math.floor(h / rows));
+  const colsSafe = Math.max(1, cols);
+  const rowsSafe = Math.max(1, rows);
+  const cellW = Math.max(1, Math.min(maxCellSize, Math.floor(w / colsSafe), Math.floor(h / rowsSafe)));
   const cellH = cellW;
   const totalW = cols * cellW;
   const totalH = rows * cellH;
@@ -83,7 +85,9 @@ export function hitTest(
   clientY: number,
   canvas: HTMLCanvasElement
 ): { row: number; col: number } | null {
+  if (cellW <= 0 || cellH <= 0) return null;
   const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
   const x = (clientX - rect.left) * scaleX - offsetX;

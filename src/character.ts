@@ -18,7 +18,7 @@ export function applyItemBonuses(stats: CharacterStats, inventory: InventoryItem
   let xpMod = 1;
   for (const { def, count } of inventory) {
     if (def.hpBonus) maxHp += def.hpBonus * count;
-    if (def.xpMod) xpMod *= def.xpMod * count;
+    if (def.xpMod) xpMod *= Math.pow(def.xpMod, count);
   }
   return {
     ...stats,
