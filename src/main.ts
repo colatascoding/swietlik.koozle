@@ -15,6 +15,7 @@ import {
 } from './room.js';
 import { renderGrid, fitGridInCanvas, hitTest } from './render.js';
 import { applyItemBonuses } from './character.js';
+import { MOB_TYPES } from './mobs.js';
 
 // --- State
 let state: GameState = createGameState();
@@ -79,7 +80,7 @@ function buildSidebar(): void {
       updateRoom(roomStartAlive(current));
       startGOL();
     } else if (current.phase === 'complete') {
-      state = giveRoomReward(state, 15 + current.stepCount, true, state.currentRoomIndex);
+      state = giveRoomReward(state, 15 + current.stepCount, true, current);
       state = addRoom(state);
       updateRoom(getCurrentRoom(state));
       stopGOL();
@@ -191,6 +192,8 @@ function paint(): void {
   renderGrid(
     ctx,
     room.grid,
+    room.mobGrid,
+    MOB_TYPES,
     room.phase,
     layout.cellW,
     layout.cellH,

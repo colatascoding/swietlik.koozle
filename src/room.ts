@@ -1,8 +1,12 @@
 import type { Grid2D, RoomPhase } from './types.js';
-import { createPregeneratedGrid, step, toggleCell, gridsEqual, WALL } from './gameOfLife.js';
+import { createPregeneratedGrid, stepWithMobs, toggleCell, gridsEqual, WALL } from './gameOfLife.js';
+import { MOB_TYPES, PIXEL_MOB_COUNT, randomPixelMobIndex } from './mobs.js';
 
 const DEFAULT_ROWS = 12;
 const DEFAULT_COLS = 12;
+
+/** Mob type index per cell (-1 = dead/wall). Same dimensions as grid. */
+export type MobGrid = number[][];
 
 /** Number of cell toggles the player can make before starting life (1–3 per room) */
 export const MIN_CHANGES = 1;
@@ -12,24 +16,36 @@ function randomInt(min: number, max: number): number {
   return min + Math.floor(Math.random() * (max - min + 1));
 }
 
+function createMobGridForGrid(grid: Grid2D): MobGrid {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  const mobGrid: MobGrid = Array.from({ length: rows }, () => Array(cols).fill(-1));
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] === 1) mobGrid[r][c] = randomPixelMobIndex();
+    }
+  }
+  return mobGrid;
+}
+
 export interface RoomState {
   id: string;
   grid: Grid2D;
+  /** Mob type index per cell; -1 for dead/wall. Same size as grid. */
+  mobGrid: MobGrid;
   phase: RoomPhase;
-  /** Current step count while phase === 'alive' */
   stepCount: number;
-  /** Rule modifier from items (e.g. B3/S23) */
   ruleMod?: string;
-  /** Toggles left in edit phase (1–3). Each click consumes one. */
   changesLeft: number;
-  /** True when the grid did not change after the last step (still life). */
   stable?: boolean;
 }
 
 export function createRoom(id: string, ruleMod?: string): RoomState {
+  const grid = createPregeneratedGrid(DEFAULT_ROWS, DEFAULT_COLS);
   return {
     id,
-    grid: createPregeneratedGrid(DEFAULT_ROWS, DEFAULT_COLS),
+    grid,
+    mobGrid: createMobGridForGrid(grid),
     phase: 'edit',
     stepCount: 0,
     ruleMod,
@@ -40,9 +56,14 @@ export function createRoom(id: string, ruleMod?: string): RoomState {
 export function roomToggleCell(room: RoomState, row: number, col: number): RoomState {
   if (room.phase !== 'edit' || room.changesLeft < 1) return room;
   if (room.grid[row]?.[col] === WALL) return room;
+  const newGrid = toggleCell(room.grid, row, col);
+  const newMobGrid = room.mobGrid.map((rowArr) => [...rowArr]);
+  if (newGrid[row][col] === 1) newMobGrid[row][col] = randomPixelMobIndex();
+  else newMobGrid[row][col] = -1;
   return {
     ...room,
-    grid: toggleCell(room.grid, row, col),
+    grid: newGrid,
+    mobGrid: newMobGrid,
     changesLeft: room.changesLeft - 1,
   };
 }
@@ -58,11 +79,17 @@ export function roomStartAlive(room: RoomState): RoomState {
 
 export function roomTick(room: RoomState): RoomState {
   if (room.phase !== 'alive') return room;
-  const nextGrid = step(room.grid, room.ruleMod);
+  const { grid: nextGrid, mobGrid: nextMobGrid } = stepWithMobs(
+    room.grid,
+    room.mobGrid,
+    MOB_TYPES,
+    room.ruleMod
+  );
   const stable = gridsEqual(room.grid, nextGrid);
   return {
     ...room,
     grid: nextGrid,
+    mobGrid: nextMobGrid,
     stepCount: room.stepCount + 1,
     stable,
   };

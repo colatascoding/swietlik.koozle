@@ -1,7 +1,7 @@
 import type { Grid2D, RoomPhase } from './types.js';
+import type { MobDef } from './types.js';
 import { WALL } from './gameOfLife.js';
 
-const CELL_COLOR_ALIVE = '#7ee8a8';
 const CELL_COLOR_DEAD = '#0d0f14';
 const CELL_COLOR_WALL = '#3d4556';
 const GRID_LINE = '#1e232e';
@@ -10,6 +10,8 @@ const EDIT_OVERLAY = 'rgba(126, 232, 168, 0.15)';
 export function renderGrid(
   ctx: CanvasRenderingContext2D,
   grid: Grid2D,
+  mobGrid: number[][],
+  mobTypes: MobDef[],
   phase: RoomPhase,
   cellW: number,
   cellH: number,
@@ -29,7 +31,8 @@ export function renderGrid(
         ctx.fillStyle = CELL_COLOR_WALL;
         ctx.fillRect(x, y, cellW, cellH);
       } else if (cell === 1) {
-        ctx.fillStyle = CELL_COLOR_ALIVE;
+        const idx = mobGrid[r]?.[c] ?? 0;
+        ctx.fillStyle = mobTypes[idx]?.color ?? '#7ee8a8';
         ctx.fillRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
       }
     }

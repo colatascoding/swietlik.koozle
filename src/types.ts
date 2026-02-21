@@ -38,8 +38,12 @@ export interface InventoryItem {
 export interface MobDef {
   id: string;
   name: string;
+  /** Hex color for this mob when drawn as a pixel */
+  color: string;
   /** Damage dealt to player when encountered */
   damage: number;
   /** XP granted when defeated */
   xpReward: number;
+  /** Optional GoL rule for this mob type (e.g. "B3/S23"). If set, this mob uses different birth/survive. */
+  ruleMod?: string;
 }

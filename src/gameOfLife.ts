@@ -41,6 +41,31 @@ function countNeighbors(grid: Grid2D, row: number, col: number): number {
   return count;
 }
 
+/** Collect mob type indices of live neighbors (for birth type assignment). */
+function neighborMobIndices(
+  mobGrid: number[][],
+  grid: Grid2D,
+  row: number,
+  col: number
+): number[] {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  const out: number[] = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const r = row + dr;
+      const c = col + dc;
+      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+      if (grid[r][c] === 1) {
+        const idx = mobGrid[r]?.[c] ?? -1;
+        if (idx >= 0) out.push(idx);
+      }
+    }
+  }
+  return out;
+}
+
 /** One step of Game of Life with optional custom birth/survive rules */
 export function step(
   grid: Grid2D,
@@ -67,6 +92,59 @@ export function step(
     }
   }
   return next;
+}
+
+export interface MobTypeLike {
+  ruleMod?: string;
+}
+
+/** One step with per-cell mob types: each live cell uses its mob's ruleMod for survive; birth uses global rule and inherits type from neighbors. */
+export function stepWithMobs(
+  grid: Grid2D,
+  mobGrid: number[][],
+  mobTypes: MobTypeLike[],
+  globalRuleMod?: string
+): { grid: Grid2D; mobGrid: number[][] } {
+  const rows = grid.length;
+  const cols = grid[0]?.length ?? 0;
+  const next: Grid2D = grid.map((r) => [...r] as Cell[]);
+  const nextMob: number[][] = mobGrid.map((r) => [...r]);
+
+  const globalRule = parseRule(globalRuleMod);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c] === WALL) {
+        next[r][c] = WALL;
+        nextMob[r][c] = -1;
+        continue;
+      }
+      const n = countNeighbors(grid, r, c);
+      const alive = grid[r][c] === 1;
+      const mobIdx = mobGrid[r]?.[c] ?? -1;
+      const cellRule = mobIdx >= 0 ? parseRule(mobTypes[mobIdx]?.ruleMod) : globalRule;
+
+      if (alive) {
+        const survives = cellRule.survive.includes(n);
+        next[r][c] = survives ? (1 as Cell) : (0 as Cell);
+        nextMob[r][c] = survives ? mobIdx : -1;
+      } else {
+        const born = globalRule.birth.includes(n);
+        next[r][c] = born ? (1 as Cell) : (0 as Cell);
+        if (born) {
+          const neighbors = neighborMobIndices(mobGrid, grid, r, c);
+          nextMob[r][c] =
+            neighbors.length > 0
+              ? neighbors[Math.floor(Math.random() * neighbors.length)]!
+              : -1;
+          if (nextMob[r][c] < 0) nextMob[r][c] = 0;
+        } else {
+          nextMob[r][c] = -1;
+        }
+      }
+    }
+  }
+  return { grid: next, mobGrid: nextMob };
 }
 
 /** Create empty grid */

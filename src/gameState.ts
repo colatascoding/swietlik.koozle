@@ -4,7 +4,7 @@ import { createCharacter, takeDamage, addXp, applyItemBonuses } from './characte
 import { createRoom } from './room.js';
 import { getActiveRuleMod } from './character.js';
 import { pickRandomItem, getItemById } from './items.js';
-import { rollMobsForRoom } from './mobs.js';
+import { mobsFromGrid, MOB_TYPES } from './mobs.js';
 
 export interface GameState {
   phase: 'playing' | 'dead' | 'victory';
@@ -66,14 +66,14 @@ export function applyCharacterDamage(state: GameState, damage: number): GameStat
   };
 }
 
-/** Apply mob encounter (damage + XP from mobs), then room XP and maybe item. Sets lastEncounter for UI. */
+/** Apply mob encounter from the completed room's pixels (grid + mobGrid), then room XP and maybe item. */
 export function giveRoomReward(
   state: GameState,
   roomXp: number,
   maybeItem: boolean,
-  roomIndex: number
+  completedRoom: RoomState
 ): GameState {
-  const mobs = rollMobsForRoom(roomIndex);
+  const mobs = mobsFromGrid(completedRoom.grid, completedRoom.mobGrid, MOB_TYPES);
   const damage = mobs.reduce((s, m) => s + m.damage, 0);
   const mobXp = mobs.reduce((s, m) => s + m.xpReward, 0);
 
