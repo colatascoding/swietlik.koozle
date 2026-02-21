@@ -1,7 +1,9 @@
 import type { Grid2D, RoomPhase } from './types.js';
+import { WALL } from './gameOfLife.js';
 
 const CELL_COLOR_ALIVE = '#7ee8a8';
 const CELL_COLOR_DEAD = '#0d0f14';
+const CELL_COLOR_WALL = '#3d4556';
 const GRID_LINE = '#1e232e';
 const EDIT_OVERLAY = 'rgba(126, 232, 168, 0.15)';
 
@@ -22,7 +24,11 @@ export function renderGrid(
     for (let c = 0; c < cols; c++) {
       const x = c * cellW;
       const y = r * cellH;
-      if (grid[r][c] === 1) {
+      const cell = grid[r][c];
+      if (cell === WALL) {
+        ctx.fillStyle = CELL_COLOR_WALL;
+        ctx.fillRect(x, y, cellW, cellH);
+      } else if (cell === 1) {
         ctx.fillStyle = CELL_COLOR_ALIVE;
         ctx.fillRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
       }

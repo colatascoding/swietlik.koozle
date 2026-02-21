@@ -1,5 +1,5 @@
 import type { Grid2D, RoomPhase } from './types.js';
-import { createPregeneratedGrid, step, toggleCell, gridsEqual } from './gameOfLife.js';
+import { createPregeneratedGrid, step, toggleCell, gridsEqual, WALL } from './gameOfLife.js';
 
 const DEFAULT_ROWS = 12;
 const DEFAULT_COLS = 12;
@@ -39,6 +39,7 @@ export function createRoom(id: string, ruleMod?: string): RoomState {
 
 export function roomToggleCell(room: RoomState, row: number, col: number): RoomState {
   if (room.phase !== 'edit' || room.changesLeft < 1) return room;
+  if (room.grid[row]?.[col] === WALL) return room;
   return {
     ...room,
     grid: toggleCell(room.grid, row, col),

@@ -1,5 +1,5 @@
-/** Grid cell: 0 = dead, 1 = alive */
-export type Cell = 0 | 1;
+/** Grid cell: 0 = dead, 1 = alive, 2 = wall (fixed, not affected by Game of Life) */
+export type Cell = 0 | 1 | 2;
 
 export type Grid2D = Cell[][];
 

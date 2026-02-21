@@ -3,6 +3,9 @@ import type { Grid2D, Cell } from './types.js';
 const DEFAULT_BIRTH = [3];
 const DEFAULT_SURVIVE = [2, 3];
 
+/** Wall cell value; walls are fixed and do not participate in GoL */
+export const WALL = 2 as Cell;
+
 /** Parse rule string like "B3/S23" or "birth3 survive23" into birth/survive counts */
 export function parseRule(ruleMod?: string): { birth: number[]; survive: number[] } {
   if (!ruleMod) return { birth: DEFAULT_BIRTH, survive: DEFAULT_SURVIVE };
@@ -21,7 +24,7 @@ export function parseRule(ruleMod?: string): { birth: number[]; survive: number[
   return { birth, survive };
 }
 
-/** Count live neighbors (8-neighborhood). Wraps at edges. */
+/** Count live neighbors (8-neighborhood). Walls block; only alive (1) counts. No wrapping at edges. */
 function countNeighbors(grid: Grid2D, row: number, col: number): number {
   const rows = grid.length;
   const cols = grid[0]?.length ?? 0;
@@ -29,9 +32,10 @@ function countNeighbors(grid: Grid2D, row: number, col: number): number {
   for (let dr = -1; dr <= 1; dr++) {
     for (let dc = -1; dc <= 1; dc++) {
       if (dr === 0 && dc === 0) continue;
-      const r = (row + dr + rows) % rows;
-      const c = (col + dc + cols) % cols;
-      count += grid[r][c];
+      const r = row + dr;
+      const c = col + dc;
+      if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+      if (grid[r][c] === 1) count += 1;
     }
   }
   return count;
@@ -49,6 +53,10 @@ export function step(
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
+      if (grid[r][c] === WALL) {
+        next[r][c] = WALL;
+        continue;
+      }
       const n = countNeighbors(grid, r, c);
       const alive = grid[r][c] === 1;
       if (alive) {
@@ -66,19 +74,21 @@ export function createGrid(rows: number, cols: number): Grid2D {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell));
 }
 
-/** Create a grid with a random pregenerated pattern (e.g. ~25% live cells) so it's never empty */
+/** Create a grid with walls on the border and a random pattern in the interior. */
 export function createPregeneratedGrid(rows: number, cols: number, fillRatio: number = 0.25): Grid2D {
   const grid = createGrid(rows, cols);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      grid[r][c] = (Math.random() < fillRatio ? 1 : 0) as Cell;
+      const isWall = r === 0 || r === rows - 1 || c === 0 || c === cols - 1;
+      grid[r][c] = isWall ? WALL : (Math.random() < fillRatio ? 1 : 0) as Cell;
     }
   }
   return grid;
 }
 
-/** Toggle cell at (row, col) */
+/** Toggle cell at (row, col). Walls cannot be toggled. */
 export function toggleCell(grid: Grid2D, row: number, col: number): Grid2D {
+  if (grid[row]?.[col] === WALL) return grid;
   const next = grid.map((r) => [...r] as Cell[]);
   if (next[row]?.[col] !== undefined) {
     next[row][col] = (1 - next[row][col]) as Cell;
@@ -86,9 +96,9 @@ export function toggleCell(grid: Grid2D, row: number, col: number): Grid2D {
   return next;
 }
 
-/** Count live cells */
+/** Count live cells (excludes walls) */
 export function countAlive(grid: Grid2D): number {
-  return grid.flat().reduce<number>((a, c) => a + c, 0);
+  return grid.flat().reduce<number>((a, c) => a + (c === 1 ? 1 : 0), 0);
 }
 
 /** True if both grids have the same dimensions and cell values */
