@@ -1,8 +1,16 @@
 import type { Grid2D, RoomPhase } from './types.js';
-import { createGrid, step, toggleCell } from './gameOfLife.js';
+import { createPregeneratedGrid, step, toggleCell } from './gameOfLife.js';
 
 const DEFAULT_ROWS = 12;
 const DEFAULT_COLS = 12;
+
+/** Number of cell toggles the player can make before starting life (1–3 per room) */
+export const MIN_CHANGES = 1;
+export const MAX_CHANGES = 3;
+
+function randomInt(min: number, max: number): number {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
 
 export interface RoomState {
   id: string;
@@ -12,23 +20,27 @@ export interface RoomState {
   stepCount: number;
   /** Rule modifier from items (e.g. B3/S23) */
   ruleMod?: string;
+  /** Toggles left in edit phase (1–3). Each click consumes one. */
+  changesLeft: number;
 }
 
 export function createRoom(id: string, ruleMod?: string): RoomState {
   return {
     id,
-    grid: createGrid(DEFAULT_ROWS, DEFAULT_COLS),
+    grid: createPregeneratedGrid(DEFAULT_ROWS, DEFAULT_COLS),
     phase: 'edit',
     stepCount: 0,
     ruleMod,
+    changesLeft: randomInt(MIN_CHANGES, MAX_CHANGES),
   };
 }
 
 export function roomToggleCell(room: RoomState, row: number, col: number): RoomState {
-  if (room.phase !== 'edit') return room;
+  if (room.phase !== 'edit' || room.changesLeft < 1) return room;
   return {
     ...room,
     grid: toggleCell(room.grid, row, col),
+    changesLeft: room.changesLeft - 1,
   };
 }
 

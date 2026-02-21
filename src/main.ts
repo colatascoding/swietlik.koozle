@@ -59,7 +59,7 @@ function buildSidebar(): void {
   statusDiv.className = `room-status ${room.phase}`;
   statusDiv.textContent =
     room.phase === 'edit'
-      ? 'Draw on the grid, then start life'
+      ? `Changes left: ${room.changesLeft}. Toggle cells, then start life.`
       : room.phase === 'alive'
         ? `Life running — step ${room.stepCount}`
         : 'Room complete — go to next';
@@ -196,7 +196,7 @@ function resize(): void {
 
 function onCanvasClick(e: MouseEvent): void {
   const room = getCurrentRoom(state);
-  if (room.phase !== 'edit') return;
+  if (room.phase !== 'edit' || room.changesLeft < 1) return;
   const { rows, cols } = getRoomGridSize(room);
   const hit = hitTest(
     layout.offsetX,

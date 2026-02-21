@@ -66,6 +66,17 @@ export function createGrid(rows: number, cols: number): Grid2D {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0 as Cell));
 }
 
+/** Create a grid with a random pregenerated pattern (e.g. ~25% live cells) so it's never empty */
+export function createPregeneratedGrid(rows: number, cols: number, fillRatio: number = 0.25): Grid2D {
+  const grid = createGrid(rows, cols);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      grid[r][c] = (Math.random() < fillRatio ? 1 : 0) as Cell;
+    }
+  }
+  return grid;
+}
+
 /** Toggle cell at (row, col) */
 export function toggleCell(grid: Grid2D, row: number, col: number): Grid2D {
   const next = grid.map((r) => [...r] as Cell[]);
