@@ -34,3 +34,12 @@ export interface InventoryItem {
   def: ItemDef;
   count: number;
 }
+
+export interface MobDef {
+  id: string;
+  name: string;
+  /** Damage dealt to player when encountered */
+  damage: number;
+  /** XP granted when defeated */
+  xpReward: number;
+}

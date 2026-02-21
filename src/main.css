@@ -90,6 +90,15 @@ body {
   padding: 0.75rem 1rem;
 }
 
+.encounter-panel .encounter-text {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.encounter-panel .encounter-text:first-of-type {
+  margin-top: 0;
+}
+
 .panel h3 {
   margin: 0 0 0.5rem 0;
   font-size: 0.9rem;

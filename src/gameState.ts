@@ -1,9 +1,10 @@
-import type { CharacterStats, InventoryItem } from './types.js';
+import type { CharacterStats, InventoryItem, MobDef } from './types.js';
 import type { RoomState } from './room.js';
 import { createCharacter, takeDamage, addXp, applyItemBonuses } from './character.js';
 import { createRoom } from './room.js';
 import { getActiveRuleMod } from './character.js';
 import { pickRandomItem, getItemById } from './items.js';
+import { rollMobsForRoom } from './mobs.js';
 
 export interface GameState {
   phase: 'playing' | 'dead' | 'victory';
@@ -11,6 +12,8 @@ export interface GameState {
   currentRoomIndex: number;
   character: CharacterStats;
   inventory: InventoryItem[];
+  /** Last mob encounter (for UI); set when finishing a room and going to next */
+  lastEncounter?: { mobs: MobDef[]; damage: number; xp: number };
 }
 
 export function createGameState(): GameState {
@@ -63,11 +66,24 @@ export function applyCharacterDamage(state: GameState, damage: number): GameStat
   };
 }
 
-export function giveRoomReward(state: GameState, xp: number, maybeItem: boolean): GameState {
+/** Apply mob encounter (damage + XP from mobs), then room XP and maybe item. Sets lastEncounter for UI. */
+export function giveRoomReward(
+  state: GameState,
+  roomXp: number,
+  maybeItem: boolean,
+  roomIndex: number
+): GameState {
+  const mobs = rollMobsForRoom(roomIndex);
+  const damage = mobs.reduce((s, m) => s + m.damage, 0);
+  const mobXp = mobs.reduce((s, m) => s + m.xpReward, 0);
+
   let next: GameState = {
     ...state,
-    character: addXp(state.character, xp, state.inventory),
+    character: takeDamage(state.character, damage),
+    lastEncounter: { mobs, damage, xp: mobXp },
   };
+  next.phase = next.character.hp <= 0 ? 'dead' : state.phase;
+  next.character = addXp(next.character, roomXp + mobXp, next.inventory);
   next.character = applyItemBonuses(next.character, next.inventory);
   if (maybeItem && Math.random() < 0.4) next = addRandomItem(next);
   return next;

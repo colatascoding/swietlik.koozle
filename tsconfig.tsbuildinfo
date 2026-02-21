@@ -1,1 +1,1 @@
-{"root":["./src/character.ts","./src/gameoflife.ts","./src/gamestate.ts","./src/items.ts","./src/main.ts","./src/render.ts","./src/room.ts","./src/types.ts"],"version":"5.6.3"}
+{"root":["./src/character.ts","./src/gameoflife.ts","./src/gamestate.ts","./src/items.ts","./src/main.ts","./src/mobs.ts","./src/render.ts","./src/room.ts","./src/types.ts"],"version":"5.6.3"}

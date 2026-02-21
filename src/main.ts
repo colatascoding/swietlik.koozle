@@ -79,7 +79,7 @@ function buildSidebar(): void {
       updateRoom(roomStartAlive(current));
       startGOL();
     } else if (current.phase === 'complete') {
-      state = giveRoomReward(state, 15 + current.stepCount, true);
+      state = giveRoomReward(state, 15 + current.stepCount, true, state.currentRoomIndex);
       state = addRoom(state);
       updateRoom(getCurrentRoom(state));
       stopGOL();
@@ -105,6 +105,18 @@ function buildSidebar(): void {
   btnWrap.append(startBtn, completeBtn);
   statusPanel.append(btnWrap);
   sidebar.appendChild(statusPanel);
+
+  if (state.lastEncounter && state.lastEncounter.mobs.length > 0) {
+    const encPanel = document.createElement('div');
+    encPanel.className = 'panel encounter-panel';
+    const names = state.lastEncounter.mobs.map((m) => m.name).join(', ');
+    encPanel.innerHTML = `
+      <h3>Last encounter</h3>
+      <p class="encounter-text">Defeated: ${names}</p>
+      <p class="encounter-text">+${state.lastEncounter.xp} XP · Took ${state.lastEncounter.damage} damage</p>
+    `;
+    sidebar.appendChild(encPanel);
+  }
 
   const charPanel = document.createElement('div');
   charPanel.className = 'panel';
