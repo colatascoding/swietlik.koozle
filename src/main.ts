@@ -25,8 +25,6 @@ let layout: { cellW: number; cellH: number; offsetX: number; offsetY: number } =
   offsetX: 0,
   offsetY: 0,
 };
-let golInterval: number | null = null;
-const GOL_MS = 120;
 
 // --- DOM
 const app = document.getElementById('app')!;
@@ -63,8 +61,8 @@ function buildSidebar(): void {
       ? `Changes left: ${room.changesLeft}. Toggle cells, then start life.`
       : room.phase === 'alive'
         ? room.stable
-          ? `Life stable — no change (step ${room.stepCount}). Finish to collect reward.`
-          : `Life running — step ${room.stepCount}`
+          ? `Life stable — step ${room.stepCount}. Finish to collect reward.`
+          : `Step ${room.stepCount}. Click Step to advance, or Finish when done.`
         : 'Room complete — go to next';
   statusPanel.appendChild(statusDiv);
 
@@ -72,19 +70,32 @@ function buildSidebar(): void {
   btnWrap.style.marginTop = '0.75rem';
   const startBtn = document.createElement('button');
   startBtn.className = 'btn btn-block';
-  startBtn.textContent = room.phase === 'edit' ? 'Start life' : room.phase === 'alive' ? 'Running…' : 'Next room';
+  startBtn.textContent = room.phase === 'edit' ? 'Start life' : room.phase === 'alive' ? 'Step / Finish below' : 'Next room';
   startBtn.disabled = room.phase === 'alive';
   startBtn.onclick = () => {
     const current = getCurrentRoom(state);
     if (current.phase === 'edit') {
       updateRoom(roomStartAlive(current));
-      startGOL();
+      buildSidebar();
+      paint();
     } else if (current.phase === 'complete') {
       state = giveRoomReward(state, 15 + current.stepCount, true, current);
       state = addRoom(state);
       updateRoom(getCurrentRoom(state));
-      stopGOL();
       buildHeader();
+      buildSidebar();
+      paint();
+    }
+  };
+  const stepBtn = document.createElement('button');
+  stepBtn.className = 'btn btn-block';
+  stepBtn.textContent = 'Step';
+  stepBtn.style.marginTop = '0.5rem';
+  stepBtn.disabled = room.phase !== 'alive';
+  stepBtn.onclick = () => {
+    const current = getCurrentRoom(state);
+    if (current.phase === 'alive') {
+      updateRoom(roomTick(current));
       buildSidebar();
       paint();
     }
@@ -97,13 +108,12 @@ function buildSidebar(): void {
   completeBtn.onclick = () => {
     const current = getCurrentRoom(state);
     if (current.phase === 'alive') {
-      stopGOL();
       updateRoom(roomComplete(current));
       buildSidebar();
       paint();
     }
   };
-  btnWrap.append(startBtn, completeBtn);
+  btnWrap.append(startBtn, stepBtn, completeBtn);
   statusPanel.append(btnWrap);
   sidebar.appendChild(statusPanel);
 
@@ -111,11 +121,15 @@ function buildSidebar(): void {
     const encPanel = document.createElement('div');
     encPanel.className = 'panel encounter-panel';
     const names = state.lastEncounter.mobs.map((m) => m.name).join(', ');
-    encPanel.innerHTML = `
+    let html = `
       <h3>Last encounter</h3>
       <p class="encounter-text">Defeated: ${names}</p>
       <p class="encounter-text">+${state.lastEncounter.xp} XP · Took ${state.lastEncounter.damage} damage</p>
     `;
+    if (state.lastEncounter.bonusReasons && state.lastEncounter.bonusReasons.length > 0) {
+      html += `<p class="encounter-bonus">Bonus: ${state.lastEncounter.bonusReasons.join(', ')}</p>`;
+    }
+    encPanel.innerHTML = html;
     sidebar.appendChild(encPanel);
   }
 
@@ -186,26 +200,6 @@ function updateRoom(room: RoomState): void {
   const rooms = [...state.rooms];
   rooms[state.currentRoomIndex] = room;
   state = { ...state, rooms };
-}
-
-function startGOL(): void {
-  stopGOL();
-  golInterval = window.setInterval(() => {
-    const room = getCurrentRoom(state);
-    if (room.phase !== 'alive') return;
-    const next = roomTick(room);
-    updateRoom(next);
-    buildSidebar();
-    paint();
-    if (next.stable) stopGOL();
-  }, GOL_MS);
-}
-
-function stopGOL(): void {
-  if (golInterval != null) {
-    clearInterval(golInterval);
-    golInterval = null;
-  }
 }
 
 function paint(): void {

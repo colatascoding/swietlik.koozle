@@ -5,6 +5,7 @@ import { createRoom } from './room.js';
 import { getActiveRuleMod } from './character.js';
 import { pickRandomItem, getItemById } from './items.js';
 import { mobsFromGrid, MOB_TYPES } from './mobs.js';
+import { getScenarioBonuses } from './scenarios.js';
 
 export interface GameState {
   phase: 'playing' | 'dead' | 'victory';
@@ -13,7 +14,7 @@ export interface GameState {
   character: CharacterStats;
   inventory: InventoryItem[];
   /** Last mob encounter (for UI); set when finishing a room and going to next */
-  lastEncounter?: { mobs: MobDef[]; damage: number; xp: number };
+  lastEncounter?: { mobs: MobDef[]; damage: number; xp: number; bonusReasons?: string[] };
 }
 
 export function createGameState(): GameState {
@@ -66,25 +67,33 @@ export function applyCharacterDamage(state: GameState, damage: number): GameStat
   };
 }
 
-/** Apply mob encounter from the completed room's pixels (grid + mobGrid), then room XP and maybe item. */
+/** Apply mob encounter from the completed room's pixels, scenario bonuses, then room XP and items. */
 export function giveRoomReward(
   state: GameState,
   roomXp: number,
   maybeItem: boolean,
   completedRoom: RoomState
 ): GameState {
-  const mobs = mobsFromGrid(completedRoom.grid, completedRoom.mobGrid, MOB_TYPES);
+  const baseMobs = mobsFromGrid(completedRoom.grid, completedRoom.mobGrid, MOB_TYPES);
+  const scenario = getScenarioBonuses(completedRoom);
+  const mobs = [...baseMobs, ...scenario.bonusMobs];
   const damage = mobs.reduce((s, m) => s + m.damage, 0);
   const mobXp = mobs.reduce((s, m) => s + m.xpReward, 0);
 
   let next: GameState = {
     ...state,
     character: takeDamage(state.character, damage),
-    lastEncounter: { mobs, damage, xp: mobXp },
+    lastEncounter: {
+      mobs,
+      damage,
+      xp: mobXp,
+      bonusReasons: scenario.reasons.length > 0 ? scenario.reasons : undefined,
+    },
   };
   next.phase = next.character.hp <= 0 ? 'dead' : state.phase;
   next.character = addXp(next.character, roomXp + mobXp, next.inventory);
   next.character = applyItemBonuses(next.character, next.inventory);
   if (maybeItem && Math.random() < 0.4) next = addRandomItem(next);
+  for (let i = 0; i < scenario.bonusItems; i++) next = addRandomItem(next);
   return next;
 }

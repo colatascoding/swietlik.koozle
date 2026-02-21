@@ -128,6 +128,15 @@ export function randomPixelMobIndex(): number {
   return Math.floor(Math.random() * PIXEL_MOB_COUNT);
 }
 
+/** Pick N random mobs (can repeat). Used for scenario bonus mobs. */
+export function pickRandomMobs(count: number): MobDef[] {
+  const result: MobDef[] = [];
+  for (let i = 0; i < count; i++) {
+    result.push(MOB_TYPES[Math.floor(Math.random() * MOB_TYPES.length)]!);
+  }
+  return result;
+}
+
 /** Build encounter list from grid + mobGrid: one mob per live cell (by type). */
 export function mobsFromGrid(
   grid: Grid2D,
