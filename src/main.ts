@@ -151,6 +151,35 @@ function buildSidebar(): void {
   }
   invPanel.appendChild(invList);
   sidebar.appendChild(invPanel);
+
+  const legendPanel = document.createElement('div');
+  legendPanel.className = 'panel legend-panel';
+  const legendTitle = document.createElement('h3');
+  legendTitle.textContent = 'Mob legend';
+  legendTitle.title = 'Creatures you may meet in the grid';
+  legendPanel.appendChild(legendTitle);
+  const legendList = document.createElement('ul');
+  legendList.className = 'legend-list';
+  for (const mob of MOB_TYPES) {
+    const li = document.createElement('li');
+    li.className = 'legend-entry';
+    const swatch = document.createElement('span');
+    swatch.className = 'legend-swatch';
+    swatch.style.backgroundColor = mob.color;
+    const content = document.createElement('div');
+    content.className = 'legend-content';
+    const label = document.createElement('span');
+    label.className = 'legend-label';
+    label.textContent = `${mob.name} (${mob.damage} dmg · ${mob.xpReward} XP)`;
+    const behavior = document.createElement('p');
+    behavior.className = 'legend-behavior';
+    behavior.textContent = mob.behavior;
+    content.append(label, behavior);
+    li.append(swatch, content);
+    legendList.appendChild(li);
+  }
+  legendPanel.appendChild(legendList);
+  sidebar.appendChild(legendPanel);
 }
 
 function updateRoom(room: RoomState): void {

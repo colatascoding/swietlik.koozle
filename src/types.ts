@@ -46,4 +46,6 @@ export interface MobDef {
   xpReward: number;
   /** Optional GoL rule for this mob type (e.g. "B3/S23"). If set, this mob uses different birth/survive. */
   ruleMod?: string;
+  /** Short explanation of how this mob behaves with surrounding cells (birth/survive in plain language). */
+  behavior: string;
 }
