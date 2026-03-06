@@ -15,10 +15,12 @@ import {
 } from './room.js';
 import { renderGrid, fitGridInCanvas, hitTest } from './render.js';
 import { applyItemBonuses } from './character.js';
-import { MOB_TYPES } from './mobs.js';
+import { MOB_TYPES, PIXEL_MOB_COUNT } from './mobs.js';
 
 // --- State
 let state: GameState = createGameState();
+/** When in edit phase: which mob type to place (0..PIXEL_MOB_COUNT-1), or null = random. */
+let selectedPlaceMobIndex: number | null = null;
 let layout: { cellW: number; cellH: number; offsetX: number; offsetY: number } = {
   cellW: 12,
   cellH: 12,
@@ -116,6 +118,41 @@ function buildSidebar(): void {
   btnWrap.append(startBtn, stepBtn, completeBtn);
   statusPanel.append(btnWrap);
   sidebar.appendChild(statusPanel);
+
+  if (room.phase === 'edit' && room.changesLeft > 0) {
+    const placePanel = document.createElement('div');
+    placePanel.className = 'panel placeable-panel';
+    const placeTitle = document.createElement('h3');
+    placeTitle.textContent = 'Placeable';
+    placePanel.appendChild(placeTitle);
+    const placeHint = document.createElement('p');
+    placeHint.className = 'placeable-hint';
+    placeHint.textContent =
+      selectedPlaceMobIndex != null
+        ? `Placing: ${MOB_TYPES[selectedPlaceMobIndex]?.name ?? '?'}. Click grid to place.`
+        : 'Click a type to choose, then click the grid. Or place randomly.';
+    placePanel.appendChild(placeHint);
+    const placeList = document.createElement('div');
+    placeList.className = 'placeable-list';
+    for (let i = 0; i < PIXEL_MOB_COUNT; i++) {
+      const mob = MOB_TYPES[i];
+      if (!mob) continue;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'placeable-swatch';
+      if (selectedPlaceMobIndex === i) btn.classList.add('selected');
+      btn.style.backgroundColor = mob.color;
+      btn.title = `${mob.name}: ${mob.behavior}`;
+      btn.setAttribute('aria-label', `Place ${mob.name}`);
+      btn.onclick = () => {
+        selectedPlaceMobIndex = selectedPlaceMobIndex === i ? null : i;
+        buildSidebar();
+      };
+      placeList.appendChild(btn);
+    }
+    placePanel.appendChild(placeList);
+    sidebar.appendChild(placePanel);
+  }
 
   if (state.lastEncounter && state.lastEncounter.mobs.length > 0) {
     const encPanel = document.createElement('div');
@@ -252,7 +289,8 @@ function onCanvasClick(e: MouseEvent): void {
     roomCanvas
   );
   if (hit) {
-    updateRoom(roomToggleCell(room, hit.row, hit.col));
+    const mobIndex = selectedPlaceMobIndex ?? undefined;
+    updateRoom(roomToggleCell(room, hit.row, hit.col, mobIndex));
     paint();
   }
 }

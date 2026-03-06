@@ -53,13 +53,26 @@ export function createRoom(id: string, ruleMod?: string): RoomState {
   };
 }
 
-export function roomToggleCell(room: RoomState, row: number, col: number): RoomState {
+/** If placeMobIndex is 0..PIXEL_MOB_COUNT-1, new live cell gets that type; else random. */
+export function roomToggleCell(
+  room: RoomState,
+  row: number,
+  col: number,
+  placeMobIndex?: number
+): RoomState {
   if (room.phase !== 'edit' || room.changesLeft < 1) return room;
   if (room.grid[row]?.[col] === WALL) return room;
   const newGrid = toggleCell(room.grid, row, col);
   const newMobGrid = room.mobGrid.map((rowArr) => [...rowArr]);
-  if (newGrid[row][col] === 1) newMobGrid[row][col] = randomPixelMobIndex();
-  else newMobGrid[row][col] = -1;
+  if (newGrid[row][col] === 1) {
+    const idx =
+      placeMobIndex != null && placeMobIndex >= 0 && placeMobIndex < PIXEL_MOB_COUNT
+        ? placeMobIndex
+        : randomPixelMobIndex();
+    newMobGrid[row][col] = idx;
+  } else {
+    newMobGrid[row][col] = -1;
+  }
   return {
     ...room,
     grid: newGrid,

@@ -263,6 +263,44 @@ body {
   min-width: 0;
 }
 
+/* Placeable (edit phase) */
+.placeable-panel {
+  margin-top: 0.5rem;
+}
+
+.placeable-hint {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.placeable-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.placeable-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.placeable-swatch:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.placeable-swatch.selected {
+  border-color: var(--life);
+  box-shadow: 0 0 0 2px var(--life);
+}
+
 .legend-label {
   display: block;
   color: var(--text);
